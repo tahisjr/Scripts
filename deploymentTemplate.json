@@ -1,0 +1,270 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ARMNetwork1Location": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "East US",
+        "West US",
+        "West Europe",
+        "East Asia",
+        "South East Asia"
+      ]
+    },
+      "ARMStorage1Name": {
+        "type": "string",
+        "defaultValue": "HeikiArmStorage01"
+      },
+      "ARMStorage1Type": {
+          "type": "string",
+          "defaultValue": "Standard_GRS",
+          "allowedValues": [
+              "Standard_LRS",
+              "Standard_GRS",
+              "Standard_ZRS"
+          ]
+      },
+      "ARMStorage1Location": {
+          "type": "string",
+          "defaultValue": "West Europe",
+          "allowedValues": [
+              "East US",
+              "West US",
+              "West Europe",
+              "East Asia",
+              "South East Asia"
+          ]
+      },
+      "ARMNic1Name": {
+        "type": "string",
+        "defaultValue": "HeikiARMNic1"
+      },
+      "ARMVM1Name": {
+        "type": "string",
+        "defaultValue": "HeikiARMVM1"
+      },
+      "ARMVM1AdminUserName": {
+        "type": "string",
+        "defaultValue": "demoUser"
+      },
+      "ARMVM1AdminPassword": {
+        "type": "securestring"
+      },
+      "ARMVM1WindowsOSVersion": {
+          "type": "string",
+          "defaultValue": "2012-R2-Datacenter",
+          "allowedValues": [
+              "2008-R2-SP1",
+              "2012-Datacenter",
+              "2012-R2-Datacenter",
+              "Windows-Server-Technical-Preview"
+          ]
+      },
+      "armvm1nicpipDnsName": {
+          "type": "string",
+          "defaultValue": "armvm1public"
+      },
+      "diagnosticsStorageAccountName": {
+        "type": "string",
+        "defaultValue": "HeikiArmStorage01"
+      },
+      "diagnosticsStorageResourceGroup": {
+          "type": "string"
+      }
+  },
+  "variables": {
+    "ARMNetwork1Prefix": "192.168.0.0/24",
+    "ARMNetwork1Subnet1Name": "ARMSubnet1",
+    "ARMNetwork1Subnet1Prefix": "192.168.0.0/25",
+    "ARMNetwork1Subnet2Name": "ARMSubnet2",
+    "ARMNetwork1Subnet2Prefix": "192.168.0.128/25",
+      "ARMNic1VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'ARMNetwork1')]",
+      "ARMNic1SubnetRef": "[concat(variables('ARMNic1VnetID'),'/subnets/', variables('ARMNetwork1Subnet2Name'))]",
+      "ARMVM1ImagePublisher": "MicrosoftWindowsServer",
+      "ARMVM1ImageOffer": "WindowsServer",
+      "ARMVM1OSDiskName": "ARMVM1OSDisk",
+      "ARMVM1VmSize": "Standard_D1",
+      "ARMVM1VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'ARMNetwork1')]",
+      "ARMVM1SubnetRef": "[concat(variables('ARMVM1VnetID'), '/subnets/', variables('ARMNetwork1Subnet2Name'))]",
+      "ARMVM1StorageAccountContainerName": "vhds",
+      "ARMVM1NicName": "[concat(parameters('ARMVM1Name'), 'NetworkInterface')]",
+      "armvm1nicpipName": "armvm1nicpip",
+      "accountid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('diagnosticsStorageResourceGroup'), '/providers/','Microsoft.Storage/storageAccounts/', parameters('diagnosticsStorageAccountName'))]",
+      "wadlogs": "<WadCfg> <DiagnosticMonitorConfiguration overallQuotaInMB=\"4096\" xmlns=\"http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration\"> <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter=\"Error\"/> <WindowsEventLog scheduledTransferPeriod=\"PT1M\" > <DataSource name=\"Application!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"Security!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"System!*[System[(Level = 1 or Level = 2)]]\" /></WindowsEventLog>",
+      "wadperfcounters1": "<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% Processor Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU utilization\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% Privileged Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU privileged time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% User Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU user time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor Information(_Total)\\Processor Frequency\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"CPU frequency\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\System\\Processes\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Processes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Process(_Total)\\Thread Count\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Threads\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Process(_Total)\\Handle Count\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Handles\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\% Committed Bytes In Use\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Memory usage\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Available Bytes\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Committed Bytes\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory committed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Commit Limit\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory commit limit\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active time\" locale=\"en-us\"/></PerformanceCounterConfiguration>",
+      "wadperfcounters2": "<PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Read Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active read time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Write Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active write time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Transfers/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Reads/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk read operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Writes/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk write operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Read Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk read speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Write Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk write speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\LogicalDisk(_Total)\\% Free Space\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk free space (percentage)\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+      "wadcfgxstart": "[concat(variables('wadlogs'), variables('wadperfcounters1'), variables('wadperfcounters2'), '<Metrics resourceId=\"')]",
+      "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name , '/providers/', 'Microsoft.Compute/virtualMachines/')]",
+      "wadcfgxend": "\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>"
+  },
+    "resources": [
+        {
+            "name": "ARMNetwork1",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[parameters('ARMNetwork1Location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "ARMNetwork1"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('ARMNetwork1Prefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('ARMNetwork1Subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('ARMNetwork1Subnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('ARMNetwork1Subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('ARMNetwork1Subnet2Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('ARMStorage1Name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[parameters('ARMStorage1Location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "ARMStorage1"
+            },
+            "properties": {
+                "accountType": "[parameters('ARMStorage1Type')]"
+            }
+        },
+        {
+            "name": "[variables('ARMVM1NicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[parameters('ARMNetwork1Location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'ARMNetwork1')]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('armvm1nicpipName'))]"
+            ],
+            "tags": {
+                "displayName": "ARMVM1Nic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('ARMVM1SubnetRef')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('armvm1nicpipName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('ARMVM1Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[parameters('ARMNetwork1Location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('ARMStorage1Name'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('ARMVM1NicName'))]"
+            ],
+            "tags": {
+                "displayName": "ARMVM1"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('ARMVM1VmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('ARMVM1Name')]",
+                    "adminUsername": "[parameters('ARMVM1AdminUsername')]",
+                    "adminPassword": "[parameters('ARMVM1AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('ARMVM1ImagePublisher')]",
+                        "offer": "[variables('ARMVM1ImageOffer')]",
+                        "sku": "[parameters('ARMVM1WindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "ARMVM1OSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('ARMStorage1Name'), '.blob.core.windows.net/', variables('ARMVM1StorageAccountContainerName'), '/', variables('ARMVM1OSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ARMVM1NicName'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "name": "Microsoft.Insights.VMDiagnosticsSettings",
+                    "type": "extensions",
+                    "location": "[parameters('ARMNetwork1Location')]",
+                    "apiVersion": "2015-06-15",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('ARMVM1Name'))]"
+                    ],
+                    "tags": {
+                        "displayName": "ARMVM1Diag"
+                    },
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Diagnostics",
+                        "type": "IaaSDiagnostics",
+                        "typeHandlerVersion": "1.4",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), parameters('ARMVM1Name'), variables('wadcfgxend')))]",
+                            "storageAccount": "[parameters('diagnosticsStorageAccountName')]"
+                        },
+                        "protectedSettings": {
+                            "storageAccountName": "[parameters('diagnosticsStorageAccountName')]",
+                            "storageAccountKey": "[listkeys(variables('accountid'), '2015-05-01-preview').key1]",
+                            "storageAccountEndPoint": "https://core.windows.net"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('armvm1nicpipName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "location": "[parameters('ARMNetwork1Location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "armvm1nicpip"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('armvm1nicpipDnsName')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
